@@ -1,7 +1,7 @@
 name: Selenium Pipeline
 
 on:
-  workflow_dispatch:   # manual run
+  workflow_dispatch:
   push:
     branches: [ main ]
 
@@ -10,36 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # ✅ Step 1: Checkout code
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4   # ✅ updated
 
-    # ✅ Step 2: Setup Python
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5   # ✅ updated
       with:
         python-version: '3.10'
 
-    # ✅ Step 3: Install dependencies
     - name: Install dependencies
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
 
-    # ✅ Step 4: Install Google Chrome
     - name: Install Chrome
       run: |
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
 
-    # ✅ Step 5: Run Selenium script
     - name: Run web.py
       run: |
         python web.py
 
-    # ✅ Step 6 (Optional): Upload output file
+    # ✅ FIXED HERE
     - name: Upload output (if exists)
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: selenium-output
         path: |
