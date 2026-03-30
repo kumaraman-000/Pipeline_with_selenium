@@ -2,6 +2,7 @@ import re
 import time
 import selenium
 from selenium import webdriver
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -47,6 +48,26 @@ class FlipkartScraper:
 
         # Create wait (IMPORTANT)
         self.wait = WebDriverWait(self.driver, 10)
+
+    def _visible_review_comments(self, limit=5):
+        comments = []
+        body_divs = self.driver.find_elements(
+            By.XPATH,
+            "//div[@dir='auto' and .//span[contains(@class,'css-1jxf684') "
+            "and string-length(normalize-space(text())) > 20]]",
+        )
+        for div in body_divs[:limit]:
+            try:
+                spans = div.find_elements(
+                    By.XPATH,
+                    ".//span[contains(@class,'css-1jxf684') "
+                    "and string-length(normalize-space(text())) > 20]",
+                )
+                if spans:
+                    comments.append(spans[0].text.strip())
+            except Exception:
+                pass
+        return comments
 
     def search_product(self, query):
         self.driver.get("https://www.flipkart.com/")
@@ -176,29 +197,48 @@ class FlipkartScraper:
             return data
 
         # 🔄 APPLY FILTER
-        def apply_filter(name):
-            try:
-                btn = self.driver.find_element(
-                    By.XPATH, f"//div[@dir='auto' and text()='{name}']"
-                )
-                self.driver.execute_script("arguments[0].click();", btn)
-                time.sleep(2)
-                self.driver.execute_script("window.scrollTo(0, 0);")
-                time.sleep(0.5)
-            except Exception:
-                pass
+        def apply_filter(*names):
+            before_comments = self._visible_review_comments()
+            xpath_options = []
+            for name in names:
+                xpath_options.extend([
+                    f"//div[@dir='auto' and normalize-space(text())='{name}']",
+                    f"//*[self::div or self::span or self::button][normalize-space(text())='{name}']",
+                    f"//*[self::div or self::span or self::button][contains(normalize-space(text()),'{name}')]",
+                ])
+
+            for xpath in xpath_options:
+                elements = self.driver.find_elements(By.XPATH, xpath)
+                for btn in elements:
+                    try:
+                        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
+                        try:
+                            ActionChains(self.driver).move_to_element(btn).pause(0.2).click(btn).perform()
+                        except Exception:
+                            self.driver.execute_script("arguments[0].click();", btn)
+
+                        for _ in range(8):
+                            time.sleep(0.5)
+                            after_comments = self._visible_review_comments()
+                            if after_comments and after_comments != before_comments:
+                                self.driver.execute_script("window.scrollTo(0, 0);")
+                                time.sleep(0.5)
+                                return True
+                    except Exception:
+                        pass
+            return False
 
         # 💬 GET DATA
         apply_filter("Most Helpful")
         most_helpful = extract_reviews()
 
-        apply_filter("Newest First")
+        apply_filter("Newest First", "Latest", "Most Recent")
         latest = extract_reviews()
 
-        apply_filter("Positive First")
+        apply_filter("Positive First", "Positive")
         positive = extract_reviews()
 
-        apply_filter("Negative First")
+        apply_filter("Negative First", "Negative")
         negative = extract_reviews()
 
         final_data = {
