@@ -1,0 +1,42 @@
+name: Selenium Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  run-selenium:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4   # ✅ updated
+
+    - name: Setup Python
+      uses: actions/setup-python@v5   # ✅ updated
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Run web.py
+      run: |
+        python web.py
+
+    # ✅ FIXED HERE
+    - name: Upload output (if exists)
+      uses: actions/upload-artifact@v4
+      with:
+        name: selenium-output
+        path: |
+          *.csv
+          *.txt
