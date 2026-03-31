@@ -1,11 +1,11 @@
 import re
 import time
-import selenium
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 DATE_RE = re.compile(
     r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[,\s]+\d{4}",
@@ -13,8 +13,6 @@ DATE_RE = re.compile(
 )
 RATING_RE = re.compile(r"^\d(\.\d)?$")  # "5", "4.5", "5.0"
 
-
-#codex will review the code
 
 class FlipkartScraper:
     def __init__(self):
@@ -40,11 +38,11 @@ class FlipkartScraper:
         # Create driver
         self.driver = webdriver.Chrome(options=options)
 
+        
         # driver=webdriver.Chrome()
         # self.driver = driver
         # driver.maximize_window()  # Maximize the browser window to ensure all elements are visible
 
-        
 
         # Create wait (IMPORTANT)
         self.wait = WebDriverWait(self.driver, 10)
@@ -78,7 +76,7 @@ class FlipkartScraper:
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'✕')]"))
             )
             close_btn.click()
-        except selenium.common.exceptions.TimeoutException:
+        except TimeoutException:
             pass
 
         search_box = self.wait.until(
