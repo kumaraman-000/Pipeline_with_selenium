@@ -2,6 +2,7 @@ import re
 import time
 from selenium import webdriver
 from selenium.webdriver import ActionChains
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -35,8 +36,12 @@ class FlipkartScraper:
             "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
         )
 
-        # Create driver
-        self.driver = webdriver.Chrome(options=options)
+        # Create driver — use system chromium paths on Streamlit Cloud
+        import shutil
+        chromedriver_path = shutil.which("chromedriver") or "/usr/bin/chromedriver"
+        chromium_path = shutil.which("chromium-browser") or shutil.which("chromium") or "/usr/bin/chromium"
+        options.binary_location = chromium_path
+        self.driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
 
         
         # driver=webdriver.Chrome()
