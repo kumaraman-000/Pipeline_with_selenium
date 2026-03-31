@@ -36,12 +36,16 @@ class FlipkartScraper:
             "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
         )
 
-        # Create driver — use system chromium paths on Streamlit Cloud
-        import shutil
-        chromedriver_path = shutil.which("chromedriver") or "/usr/bin/chromedriver"
-        chromium_path = shutil.which("chromium-browser") or shutil.which("chromium") or "/usr/bin/chromium"
-        options.binary_location = chromium_path
-        self.driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
+        # Create driver — platform-aware for local (Windows/Mac) vs Streamlit Cloud (Linux)
+        import platform, shutil
+        if platform.system() == "Linux":
+            chromedriver_path = shutil.which("chromedriver") or "/usr/bin/chromedriver"
+            chromium_path = shutil.which("chromium-browser") or shutil.which("chromium") or "/usr/bin/chromium"
+            options.binary_location = chromium_path
+            self.driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
+        else:
+            from webdriver_manager.chrome import ChromeDriverManager
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
         
         # driver=webdriver.Chrome()
